@@ -1,0 +1,21 @@
+# pre-process
+dataset: "weibo"
+num_cluster: 20
+seed: 717
+neg_ratio: 0.15
+
+# model
+hid_dim: 128
+num_layers: 3
+dropout: 0.
+
+# train
+gpu: 1
+lr: 0.001
+weight_decay: 0.00001
+epochs: 1
+
+# tune
+shot_num: 10 # 异常样本数量
+neg_times: 3 # 异常样本倍数的正常样本
+tune_epochs: 4
