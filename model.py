@@ -28,7 +28,7 @@ class MLP(nn.Module):
         h = feats
         for layer in self.mlp:
             h = layer(h)
-        h = F.normalize(h, p=2, dim=1)  # 行归一化
+        h = F.normalize(h, p=2, dim=1)  # 
         return h
          
 
@@ -57,7 +57,7 @@ class GNN(nn.Module):
         for layer in self.gcn:
             h = layer(self.g, h)
             h = self.dropout(h)
-        # h = F.normalize(h, p=2, dim=1)  # 行归一化
+
         return h
 
 
@@ -67,7 +67,7 @@ class MeanAggregator(nn.Module):
 
     def extract_H_diff(self, graph, h, cluster_ids, mode = 'local'):
         if mode == 'local':
-        # 与邻居均值的差值
+        # local diff
             with graph.local_scope():
                 graph.ndata['h'] = h
                 graph.update_all(fn.copy_u('h', 'm'), fn.mean('m', 'neigh'))
@@ -75,12 +75,12 @@ class MeanAggregator(nn.Module):
                 diff = h - neigh_means
                 return diff
         elif mode == 'cluster':
-            # 与聚类均值的差值
+            # cluster diff
             if cluster_ids is None:
                 raise ValueError("cluster_ids is required when mode='cluster'")
             
             cluster_ids = torch.tensor(cluster_ids)
-            # 计算各聚类的均值
+
             unique_clusters = torch.unique(cluster_ids)
             cluster_means = []
             for c in unique_clusters:
@@ -90,10 +90,10 @@ class MeanAggregator(nn.Module):
                 cluster_means.append(mean_h)
             cluster_means = torch.stack(cluster_means)
             
-            # 扩展聚类均值以匹配节点特征
+
             expanded_cluster_means = cluster_means[cluster_ids]
             
-            # 计算节点与聚类均值的差值
+
             diff = h - expanded_cluster_means
             return diff
         else:
@@ -123,5 +123,5 @@ class Discriminator(nn.Module):
             res = torch.sum(tmp * centers, dim=1) # res = <tmp, s>
         else:
             res = torch.matmul(features, torch.matmul(self.weight, centers))  # xW^Tg
-        # sigmoid在BCEWithLogitloss中内置
+
         return res 

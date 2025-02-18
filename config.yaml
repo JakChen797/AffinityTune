@@ -16,6 +16,6 @@ weight_decay: 0.00001
 epochs: 1
 
 # tune
-shot_num: 10 # 异常样本数量
-neg_times: 3 # 异常样本倍数的正常样本
+shot_num: 10 
+neg_times: 3 
 tune_epochs: 4

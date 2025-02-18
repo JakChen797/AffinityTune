@@ -55,11 +55,9 @@ def main(cfg):
     neg_ratio = cfg['neg_ratio']
     k = cfg['num_cluster']
 
-    # 划分图
+    # 
     graph = my_load_data(dataset)
-    print(graph)
-    
-    # metis划分
+
     cluster_id = metis_partition_assignment(graph, k=k)
 
     # k-means 划分
@@ -74,17 +72,9 @@ def main(cfg):
     cluster_id = cluster_id
     np.save(cluster_id_path, cluster_id)
 
-    # 负采样
     sampled_idx = sample_idx(cluster_id, k, neg_ratio)
 
-    # 检查每个cluster的标签纯净度,这里是原标签不是异常标签
 
-    # dgl_g = CoraGraphDataset()[0]
-
-    # labels = dgl_g.ndata['label']
-    # check_idx_pure(labels, sampled_idx)
-
-    # 保存采样结果
     save_idx(dataset, sampled_idx)
 
 

@@ -121,7 +121,7 @@ def main(cfg):
     neg_times = cfg['neg_times']
     selected_neg_idx = random.sample(indices_of_zeros.numpy().tolist(), k=k*neg_times)
 
-    # 加载预训练模型
+    # load pretrained model
     model = GNN(graph, in_dim=in_dim, hid_dim=cfg['hid_dim'], activation=nn.PReLU(), layers=cfg['num_layers'], dropout=cfg['dropout'])
     pretrained_model = torch.load(f'/root/cjy/proG/pre_trained/models/{dataset}.pth')
     model.load_state_dict(pretrained_model)

@@ -9,7 +9,7 @@ from sklearn.metrics import roc_auc_score
 import yaml
 
 def sample_negidx4node(cluster_id, num_cluster):
-    # 为每个点采样一个负节点，以及一个负cluster id
+    # sample negative index for each node
     num_node = len(cluster_id)
     node_id = list(range(num_node))
 
@@ -59,7 +59,7 @@ def train(cfg, graph, model, opt, dis, cluster_id, task_heads, is_save_model):
         
         neg_node_idx, neg_cluster_idx = sample_negidx4node(cluster_id, num_cluster)
 
-        # 局部损失
+        # loss func
         local_embed = torch.mul(embed, head1)
         local_mean_h = mean_agg(graph, local_embed)
         local_pos_dis = dis(local_embed, local_mean_h, mode='local')
@@ -69,15 +69,15 @@ def train(cfg, graph, model, opt, dis, cluster_id, task_heads, is_save_model):
         local_l2 = loss_fn(local_neg_dis, torch.zeros_like(local_neg_dis))
         local_loss = local_l1 + local_l2
 
-        # cluster损失
+        
         cluster_embed = torch.mul(embed, head2)
-        # 求每个cluster的中心
+        # cluster centers
         cluster_centers = []
         for cluster in unique_cluster_id:
             curr_feats = cluster_embed[cluster_id == cluster]
             cluster_centers.append(torch.mean(curr_feats, dim=0))
 
-        cluster_centers = torch.stack(cluster_centers) # 转成二维tensor
+        cluster_centers = torch.stack(cluster_centers) 
         cluster_pos_dis = dis(cluster_embed, cluster_centers[cluster_id], mode='local')
         cluster_neg_dis = dis(cluster_embed, cluster_centers[neg_cluster_idx], mode='local')
         
