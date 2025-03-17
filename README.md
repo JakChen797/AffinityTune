@@ -10,10 +10,12 @@ conda install scikit-learn
 pip install pygod
 ```
 
+### 2. Dataset
+For real-world datasets, they can be downloaded from `https://github.com/pygod-team/data` and placed in the "dataset" folder. Also, you can inject anomalies by executing "python inject_ano.py".
 
-### 2. Unsupervised Learning
+### 3. Unsupervised Learning
 Run `python pretrain.py ` to perform the first stage of the framework and obtain the trained GNN model.
 
 
-### 3. Prompt Tuning
+### 4. Prompt Tuning
 Run `python tune.py ` to perform prompt tuning and anomaly detection.
