@@ -45,34 +45,34 @@ def tune(cfg, graph, model, task_heads, opt, W_down, dis, cluster_id, pos_idx, n
 
         sum_l, sum_l1, sum_l2 = 0, 0, 0
 
-        for epoch in range(epochs):
-            H_init = model(feats)
+        
+        H_init = model(feats)
 
-            H_local = torch.mul(H_init, head1)
-            H_cluster = torch.mul(H_init, head2)
-            H_local_diff = mean_agg.extract_H_diff(graph, H_local, cluster_id, mode='local')
-            H_cluster_diff = mean_agg.extract_H_diff(graph, H_cluster, cluster_id, mode='cluster')
+        H_local = torch.mul(H_init, head1)
+        H_cluster = torch.mul(H_init, head2)
+        H_local_diff = mean_agg.extract_H_diff(graph, H_local, cluster_id, mode='local')
+        H_cluster_diff = mean_agg.extract_H_diff(graph, H_cluster, cluster_id, mode='cluster')
 
-            H_concat = torch.cat((H_local_diff, H_cluster_diff), dim=1)
+        H_concat = torch.cat((H_local_diff, H_cluster_diff), dim=1)
 
-            H_down = torch.matmul(H_concat, W_down)
+        H_down = torch.matmul(H_concat, W_down)
 
-            center = H_down[neg_idx].mean(dim=0)
+        center = H_down[neg_idx].mean(dim=0)
 
-            pos_dis = dis(H_down[pos_idx], center, mode='global')
-            neg_dis = dis(H_down[neg_idx], center, mode='global')
+        pos_dis = dis(H_down[pos_idx], center, mode='global')
+        neg_dis = dis(H_down[neg_idx], center, mode='global')
 
-            l1 = loss_fn(pos_dis, torch.ones_like(pos_dis))
-            l2 = loss_fn(neg_dis, torch.zeros_like(neg_dis))
-            loss = l1+l2
-            
-            sum_l += loss.item()
-            sum_l1 += l1.item()
-            sum_l2 += l2.item()
+        l1 = loss_fn(pos_dis, torch.ones_like(pos_dis))
+        l2 = loss_fn(neg_dis, torch.zeros_like(neg_dis))
+        loss = l1+l2
+        
+        sum_l += loss.item()
+        sum_l1 += l1.item()
+        sum_l2 += l2.item()
 
-            opt.zero_grad()
-            loss.backward()
-            opt.step()
+        opt.zero_grad()
+        loss.backward()
+        opt.step()
             
 
         # eval
