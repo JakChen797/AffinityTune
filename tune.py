@@ -80,11 +80,21 @@ def tune(cfg, graph, model, task_heads, opt, W_down, dis, cluster_id, pos_idx, n
 
         with torch.no_grad():
             eval_h = model(feats)
-            eval_center = eval_h.mean(dim=0)
-            score = -dis(eval_h, eval_center, mode='global').cpu().numpy()
+            eval_h_local = torch.mul(eval_h, head1)
+            eval_h_cluster = torch.mul(H_init, head2)
+            eval_h_local_diff = mean_agg.extract_H_diff(graph, eval_h_local, cluster_id, mode='local')
+            eval_h_cluster_diff = mean_agg.extract_H_diff(graph, eval_h_cluster, cluster_id, mode='cluster')
+
+            eval_h_concat = torch.cat((eval_h_local_diff, eval_h_cluster_diff), dim=1)
+
+            eval_h_down = torch.matmul(eval_h_concat, W_down)
+
+            eval_center = eval_h_down.mean(dim=0)
+            score = dis(eval_h_down, eval_center, mode='global').cpu().numpy()
 
             aucroc = roc_auc_score(labels.cpu().numpy(), score)
             aucpr = average_precision_score(labels.cpu().numpy(), score)
+
 
             if aucroc > best_aucroc:
                 best_aucroc = aucroc
