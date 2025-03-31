@@ -13,17 +13,22 @@ import logging
 logging.basicConfig(filename='training.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
-def tune(cfg, graph, model, opt, W_down, dis, cluster_id, pos_idx, neg_idx):
+def tune(cfg, graph, model, task_heads, opt, W_down, dis, cluster_id, pos_idx, neg_idx):
     epochs = cfg['tune_epochs']
 
     device = cfg['gpu']
 
     mean_agg = MeanAggregator()
+    head1 = task_heads[0]
+    head2 = task_heads[1]
 
     if device>=0:
         model = model.to(device)
         dis = dis.to(device)
         W_down = W_down.to(device)
+        head1 = head1.to(device)
+        head2 = head2.to(device)
+
 
     feats = graph.ndata['feat']
     labels = graph.ndata['label']
@@ -43,10 +48,12 @@ def tune(cfg, graph, model, opt, W_down, dis, cluster_id, pos_idx, neg_idx):
         for epoch in range(epochs):
             H_init = model(feats)
 
-            H_local_diff = mean_agg.extract_H_diff(graph, H_init, cluster_id, mode='local')
-            H_local_diff = mean_agg.extract_H_diff(graph, H_init, cluster_id, mode='cluster')
+            H_local = torch.mul(H_init, head1)
+            H_cluster = torch.mul(H_init, head2)
+            H_local_diff = mean_agg.extract_H_diff(graph, H_local, cluster_id, mode='local')
+            H_cluster_diff = mean_agg.extract_H_diff(graph, H_cluster, cluster_id, mode='cluster')
 
-            H_concat = torch.cat((H_local_diff, H_local_diff), dim=1)
+            H_concat = torch.cat((H_local_diff, H_cluster_diff), dim=1)
 
             H_down = torch.matmul(H_concat, W_down)
 
@@ -121,10 +128,11 @@ def main(cfg):
     neg_times = cfg['neg_times']
     selected_neg_idx = random.sample(indices_of_zeros.numpy().tolist(), k=k*neg_times)
 
-    # load pretrained model
     model = GNN(graph, in_dim=in_dim, hid_dim=cfg['hid_dim'], activation=nn.PReLU(), layers=cfg['num_layers'], dropout=cfg['dropout'])
     pretrained_model = torch.load(f'/root/cjy/proG/pre_trained/models/{dataset}.pth')
     model.load_state_dict(pretrained_model)
+
+    task_heads = torch.load(f'/root/cjy/proG/pre_trained/task_heads/{dataset}.pth')
 
     dis = Discriminator(hid_dim=cfg['hid_dim'])
     pretrained_dis = torch.load(f'/root/cjy/proG/pre_trained/dis/{dataset}.pth')
@@ -137,7 +145,7 @@ def main(cfg):
     opt_para = list(filter(lambda p: p.requires_grad, dis.parameters())) + [W_down]
     opt = torch.optim.AdamW(opt_para, lr=cfg['lr'], weight_decay=cfg['weight_decay'])
 
-    tune(cfg, graph, model, opt, W_down, dis, cluster_id, selected_pos_idx, selected_neg_idx)
+    tune(cfg, graph, model, task_heads, opt, W_down, dis, cluster_id, selected_pos_idx, selected_neg_idx)
 
 
 if __name__ == '__main__':
